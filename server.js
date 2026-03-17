@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { refinePrompt, getAutocompleteSuggestions, spinCasino } from './services/aiService.js';
@@ -41,4 +41,4 @@ app.get('/api/spinCasino', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(Server running on port ));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
