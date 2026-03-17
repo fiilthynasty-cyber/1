@@ -1,44 +1,35 @@
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
-import { refinePrompt, getAutocompleteSuggestions, spinCasino } from './services/aiService.js';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const FRONTEND_URL = process.env.FRONTEND_URL || '*';
+app.use(cors());
+app.use(express.json());
 
-app.use(cors({ origin: FRONTEND_URL, methods: ['GET','POST'] }));
-app.use(bodyParser.json());
+// Connect to Supabase with SERVICE_ROLE_KEY (secure!)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-app.get('/api/test', (req, res) => res.json({ ok: true }));
-
-app.post('/api/autocomplete', async (req, res) => {
-    try {
-        const { task } = req.body;
-        const result = await getAutocompleteSuggestions(task);
-        res.json(result);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+// Test route
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'Backend is alive!' });
 });
 
-app.post('/api/refinePrompt', async (req, res) => {
-    try {
-        const { components, creativityLevel } = req.body;
-        const result = await refinePrompt(components, creativityLevel);
-        res.json(result);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+// Example: create user
+app.post('/api/signup', async (req, res) => {
+  const { email, password } = req.body;
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password
+  });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ data });
 });
 
-app.get('/api/spinCasino', async (req, res) => {
-    try {
-        const result = await spinCasino();
-        res.json(result);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
