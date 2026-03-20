@@ -1,21 +1,45 @@
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/generate-prompt", (req, res) => {
-  // Example prompts
-  const prompts = [
-    "Write a story about a robot in space.",
-    "Describe a futuristic city with AI citizens.",
-    "Create a dialogue between a human and an AI assistant.",
-    "Invent a new tech gadget and explain how it works."
-  ];
-  const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-  res.json({ prompt: randomPrompt });
+const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"; // replace this
+
+app.post("/api/generate", async (req, res) => {
+  const { input } = req.body;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: `Turn this into a money-making idea: ${input}`
+          }
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    res.json({
+      output: data.choices[0].message.content,
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: "AI failed" });
+  }
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
+});
